@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#174d3d">
+    <meta name="description" content="Transforme um rascunho em um app interativo, no seu estúdio local.">
+    <title>Sketch2App — Do papel ao próximo clique</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/style.css">
+    <script src="/sse.js" defer></script>
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Pular para o estúdio</a>
+    <header class="site-header shell">
+      <a class="brand" href="/" aria-label="Sketch2App, início">
+        <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="currentColor"/><path d="M11 27V13h13M16 29h13V16M13 26l14-14" fill="none" stroke="#d5ea9b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        sketch<span>2</span>app<span class="brand-dot">.</span>
+      </a>
+      <div class="header-meta"><span class="local-label">Seu estúdio local</span><a id="hub-link" href="/hub" class="button button-light hub-link">Hub</a><button id="toggle-audience-panel" class="button button-light audience-toggle" type="button" aria-expanded="false" aria-controls="audience-panel" title="Exibe o QR Code do túnel e a fila de desenhos enviados pela plateia">Plateia</button><button id="toggle-data-api" class="button button-light extras-toggle" type="button" aria-pressed="false" title="Injeta o contrato /api/data/{sid}/{colecao} no prompt para persistência por sessão via fetch">API de dados</button><button id="toggle-extras-mode" class="button button-light extras-toggle" type="button" aria-pressed="false" title="Libera o catálogo local de bibliotecas em /vendor/ (GSAP, Chart.js, Lucide, Alpine, Animate.css e fontes)">Modo caprichado</button><button id="toggle-simple-mode" class="button button-light simple-toggle" type="button" aria-pressed="false" title="Exibe apenas status e app, desligando os extras visuais do telão">Modo simples</button><button id="toggle-offline-panel" class="button button-light offline-toggle" type="button" aria-expanded="false" aria-controls="offline-panel">Modo offline</button><span class="mode-pill" id="mode-badge"><i aria-hidden="true"></i>Verificando modo</span></div>
+    </header>
+    <main class="shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div><p class="eyebrow">UM ESPAÇO PARA TIRAR IDEIAS DO PAPEL</p><h1 id="page-title">Do papel para o<br> <em>próximo clique.</em><span class="title-spark" aria-hidden="true">✳</span></h1></div>
+        <p class="intro-copy">Um rascunho, um pouco de intenção.<br> Veja sua ideia ganhar forma em um app que você pode experimentar.</p>
+      </section>
+      <p id="mode-note" class="mode-note" hidden></p>
+      <section id="offline-panel" class="offline-panel card" aria-labelledby="offline-title" hidden>
+        <div class="offline-header">
+          <div>
+            <strong id="offline-title">Plano B · Reproduzir gravação do cache</strong>
+            <p id="cache-status" class="field-help">Escolha uma sessão gravada para reproduzir sem chamar a API.</p>
+          </div>
+          <button id="refresh-cache" class="button button-light" type="button">Atualizar</button>
+        </div>
+        <div class="offline-controls">
+          <label class="sr-only" for="cache-select">Selecionar gravação em cache</label>
+          <select id="cache-select"></select>
+          <button id="replay-button" class="button button-secondary" type="button" disabled><span id="replay-label">Reproduzir gravação</span><span class="chat-arrow" aria-hidden="true">↗</span></button>
+        </div>
+      </section>
+      <section id="audience-panel" class="offline-panel audience-panel card" aria-labelledby="audience-title" hidden>
+        <div class="offline-header">
+          <div>
+            <strong id="audience-title">Participação da plateia · Fila de aprovação</strong>
+            <p id="audience-status" class="field-help">Os envios da plateia por <code>/enviar</code> aguardam sua aprovação antes de chamar a IA.</p>
+          </div>
+          <button id="refresh-audience" class="button button-light" type="button">Atualizar fila</button>
+        </div>
+        <div class="audience-body">
+          <div class="audience-qr-box" id="audience-qr-box">
+            <div id="audience-qr-svg" class="audience-qr-svg" aria-label="QR Code para a plateia enviar desenhos"></div>
+            <p id="audience-public-url" class="audience-public-url">Configure <code>PUBLIC_BASE_URL</code> no <code>.env</code> para exibir o QR Code do túnel.</p>
+          </div>
+          <div id="audience-queue-list" class="audience-queue-list" aria-live="polite">
+            <p class="field-help">Nenhum desenho aguardando aprovação.</p>
+          </div>
+        </div>
+      </section>
+      <div id="notice" class="notice" role="alert" hidden><p id="notice-text"></p><button id="dismiss-notice" class="icon-button" type="button" aria-label="Fechar aviso">×</button></div>
+      <div class="workspace" id="workspace">
+        <section class="input-card card" aria-label="Preparar sua ideia">
+          <form id="generation-form">
+            <fieldset id="input-fields">
+              <legend class="sr-only">Desenho e instruções</legend>
+              <div class="section-heading"><span class="step">01</span><h2>Seu rascunho</h2><span class="small-label">É aqui que começa</span></div>
+              <div class="source-tabs" role="tablist" aria-label="Origem do desenho">
+                <button id="camera-tab" type="button" role="tab" aria-selected="true" aria-controls="camera-panel">Câmera</button>
+                <button id="upload-tab" type="button" role="tab" aria-selected="false" aria-controls="upload-panel" tabindex="-1">Enviar imagem</button>
+              </div>
+              <div id="camera-panel" role="tabpanel" aria-labelledby="camera-tab">
+                <div class="camera-stage" id="camera-stage">
+                  <video id="camera-video" autoplay playsinline muted hidden aria-label="Visualização da câmera"></video>
+                  <div id="camera-placeholder" class="camera-placeholder"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 15h8l4-5h9l4 5h7v24H8z"/><circle cx="24" cy="26" r="8"/></svg><strong>Um papel. Uma boa ideia.</strong><span>Enquadre o desenho com boa luz.</span><button id="start-camera" class="button button-light" type="button">Ativar câmera <span aria-hidden="true">↗</span></button></div>
+                  <span class="frame-corner corner-tl" aria-hidden="true"></span><span class="frame-corner corner-tr" aria-hidden="true"></span><span class="frame-corner corner-bl" aria-hidden="true"></span><span class="frame-corner corner-br" aria-hidden="true"></span>
+                </div>
+                <label class="sr-only" for="camera-select">Selecionar câmera</label><select id="camera-select" hidden></select>
+                <button id="capture" class="button capture-button" type="button" disabled><span aria-hidden="true">◉</span> <span id="capture-label">Capturar desenho</span><kbd>espaço</kbd></button>
+              </div>
+              <div id="upload-panel" role="tabpanel" aria-labelledby="upload-tab" hidden>
+                <input id="image-file" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" tabindex="-1">
+                <button id="upload-zone" class="upload-zone" type="button"><span class="upload-symbol" aria-hidden="true">↥</span><strong>Seu rascunho vem por aqui</strong><span>Escolha uma foto ou arraste para esta área.</span><span class="file-types">JPG, PNG ou WebP · até 10 MB</span></button>
+              </div>
+              <div id="selected-image" class="selected-image" hidden><img id="image-preview" alt="Desenho selecionado para gerar o app"><div><strong id="image-name"></strong><span id="image-detail"></span></div><button id="remove-image" class="icon-button" type="button" aria-label="Remover desenho">×</button></div>
+              <div class="style-section"><div class="section-heading"><span class="step">02</span><label for="style-prompt">Dê o seu toque</label><span class="small-label">Opcional</span></div>
+                <textarea id="style-prompt" rows="3" placeholder="Ex.: paleta azul e vermelho, visual leve, cantos arredondados…" aria-describedby="prompt-help"></textarea>
+                <p class="field-help" id="prompt-help">Sem desenho? Você também pode descrever sua ideia aqui.</p>
+              </div>
+              <button id="generate" class="button button-primary" type="submit" disabled><span id="generate-label">Gerar meu app</span><span class="generate-arrow" aria-hidden="true">↗</span></button>
+            </fieldset>
+          </form>
+          <section id="chat-section" class="chat-section" aria-labelledby="chat-title">
+            <div class="section-heading"><span class="step">03</span><h2 id="chat-title">Ajustar no chat</h2><span class="small-label" id="chat-status-label">Após gerar</span></div>
+            <ol id="chat-messages" class="chat-messages" aria-live="polite" aria-label="Histórico da conversa">
+              <li id="chat-empty" class="chat-empty">Gere a primeira versão para pedir ajustes ou usar os atalhos abaixo.</li>
+            </ol>
+            <div class="chat-chips" role="group" aria-label="Ajustes e estilos em um clique">
+              <button type="button" class="chat-chip" data-chip="modo escuro" disabled>modo escuro</button>
+              <button type="button" class="chat-chip" data-chip="botões maiores" disabled>botões maiores</button>
+              <button type="button" class="chat-chip" data-chip="trocar paleta para verde e laranja" disabled>trocar paleta para verde e laranja</button>
+              <button type="button" class="chat-chip" data-chip="adicionar animação sutil" disabled>adicionar animação sutil</button>
+              <button type="button" class="chat-chip chat-chip-style" data-chip="aplicar estilo retrô 8-bit" disabled>retrô 8-bit</button>
+              <button type="button" class="chat-chip chat-chip-style" data-chip="aplicar estilo neon" disabled>neon</button>
+              <button type="button" class="chat-chip chat-chip-style" data-chip="aplicar estilo minimalista" disabled>minimalista</button>
+              <button type="button" class="chat-chip chat-chip-style" data-chip="aplicar efeito vidro (glassmorphism)" disabled>vidro</button>
+            </div>
+            <form id="chat-form" class="chat-form">
+              <fieldset id="chat-fields" disabled>
+                <legend class="sr-only">Pedir ajuste pelo chat</legend>
+                <div class="chat-input-row">
+                  <label class="sr-only" for="chat-input">Mensagem de ajuste</label>
+                  <textarea id="chat-input" rows="2" placeholder="Ex.: deixa o botão maior, muda para modo escuro…"></textarea>
+                  <button id="voice-button" class="button button-light voice-button" type="button" aria-pressed="false" title="Ditar ajuste por voz">🎤 Voz</button>
+                </div>
+                <label class="chat-reattach" for="reattach-image">
+                  <input id="reattach-image" type="checkbox" disabled>
+                  <span>Reenviar desenho <small id="reattach-hint">(para corrigir interpretação)</small></span>
+                </label>
+                <button id="chat-submit" class="button button-secondary" type="submit" disabled><span id="chat-submit-label">Enviar ajuste</span><span class="chat-arrow" aria-hidden="true">↗</span></button>
+              </fieldset>
+            </form>
+          </section>
+          <p class="input-footnote"><span aria-hidden="true">✧</span> Rascunhos simples também viram boas experiências.</p>
+        </section>
+        <section class="preview-card card" aria-labelledby="preview-title" id="preview-section" aria-busy="false">
+          <div class="preview-toolbar">
+            <div class="section-heading"><span class="step">03</span><h2 id="preview-title">A ideia, em ação</h2><span id="version-badge" class="version-badge" hidden>v1</span></div>
+            <div class="preview-toolbar-actions">
+              <div id="version-bar" class="version-bar" role="group" aria-label="Histórico de versões" hidden>
+                <button id="undo-version" class="version-nav" type="button" disabled aria-label="Desfazer versão">↶ Desfazer</button>
+                <div id="version-list" class="version-list" role="group" aria-label="Versões disponíveis"></div>
+                <button id="redo-version" class="version-nav" type="button" disabled aria-label="Refazer versão">Refazer ↷</button>
+                <button id="timelapse-button" class="version-nav" type="button" disabled title="Reproduzir evolução das versões sem chamar a IA">▶ Timelapse</button>
+              </div>
+              <div class="viewport-controls" role="group" aria-label="Largura da prévia"><button type="button" data-viewport="wide" aria-pressed="true">Ampla</button><button type="button" data-viewport="mobile" aria-pressed="false">Celular</button></div>
+              <div class="stage-controls" role="group" aria-label="Controles de palco">
+                <button id="toggle-compare" type="button" aria-pressed="false" disabled title="Comparar desenho original e app gerado">Antes/depois</button>
+                <button id="toggle-code" type="button" aria-pressed="false" disabled title="Atalho: C">Ver código</button>
+                <button id="download-html" type="button" disabled title="Baixar HTML autônomo com Tailwind inline">Baixar HTML</button>
+                <button id="toggle-log" type="button" aria-pressed="false" disabled title="Atalho: L">Bastidores</button>
+                <button id="toggle-fullscreen" type="button" aria-pressed="false" disabled title="Atalho: F">Tela cheia</button>
+              </div>
+            </div>
+          </div>
+          <div class="preview-canvas" id="preview-canvas">
+            <div class="empty-preview" id="empty-preview">
+              <div class="paper-scene" aria-hidden="true"><div class="scene-disc"></div><div class="paper-sketch"><span class="paper-label">a primeira ideia</span><div class="sketch-line"></div><div class="sketch-box"></div><div class="sketch-row"><i></i><i></i></div><div class="sketch-line short"></div></div><span class="scene-arrow">⤴</span><div class="mini-app"><div class="mini-top"><i></i><i></i><i></i></div><div class="mini-content"><span></span><div></div><p><i></i><i></i><i></i></p><b></b></div></div><span class="scene-star">✳</span></div>
+              <h3>Seu próximo app<br>mora aqui.</h3><p>Não precisa ser um desenho perfeito.<br>Só precisa ser o começo de uma boa ideia.</p><span class="handwritten">o resto, a gente constrói</span>
+            </div>
+            <div id="frame-host" class="frame-host" hidden></div>
+            <section id="compare-panel" class="compare-panel" aria-label="Comparação antes e depois" hidden>
+              <div id="compare-before" class="compare-before">
+                <span class="compare-badge">Desenho original</span>
+                <img id="compare-image" alt="Desenho original da sessão" hidden>
+                <p id="compare-no-image" class="compare-no-image" hidden>Sessão criada apenas por texto (sem foto de rascunho).</p>
+              </div>
+              <div class="compare-bar">
+                <label for="compare-slider">Antes / Depois</label>
+                <input id="compare-slider" type="range" min="10" max="90" value="50">
+                <button id="close-compare" class="button button-light" type="button">Fechar</button>
+              </div>
+            </section>
+            <div id="loading-overlay" class="loading-overlay" hidden>
+              <div class="loading-head">
+                <span class="spinner" aria-hidden="true"></span>
+                <div>
+                  <strong>Da ideia para a tela.</strong>
+                  <span id="generation-step">Estamos preparando seu app.</span>
+                </div>
+                <span id="elapsed" class="elapsed">00:00</span>
+              </div>
+              <span id="generation-chars">0 caracteres recebidos</span>
+              <div id="stage-screen" class="stage-screen">
+                <ol id="stage-pipeline" class="stage-pipeline" aria-label="Pipeline de geração">
+                  <li data-pipe="foto"><span>1. Entrada</span><small data-pipe-ms="foto"></small></li>
+                  <li data-pipe="preparando"><span>2. Pré-processamento</span><small data-pipe-ms="preparando"></small></li>
+                  <li data-pipe="gerando"><span>3. Gemini</span><small data-pipe-ms="gerando"></small></li>
+                  <li data-pipe="validando"><span>4. Validação</span><small data-pipe-ms="validando"></small></li>
+                  <li data-pipe="gravando"><span>5. App</span><small data-pipe-ms="gravando"></small></li>
+                </ol>
+                <div class="stage-grid">
+                  <div class="stage-vision">
+                    <div id="stage-drawing-box" class="stage-drawing-box">
+                      <img id="stage-drawing-img" alt="Rascunho em leitura" hidden>
+                      <p id="stage-text-fallback" class="stage-text-fallback" hidden>Geração a partir de instruções em texto.</p>
+                      <span class="scan-line" aria-hidden="true"></span>
+                    </div>
+                    <div class="stage-analysis-box">
+                      <strong>Leitura do desenho</strong>
+                      <ul id="stage-analysis-list" class="stage-analysis-list"></ul>
+                      <p id="stage-analysis-empty" class="stage-analysis-empty" hidden>Análise indisponível</p>
+                    </div>
+                  </div>
+                  <div class="stage-code-box">
+                    <div class="stage-code-head">
+                      <strong>Código em streaming</strong>
+                      <span id="stage-tokens-badge" class="stage-tokens-badge">~0 tokens (estimado)</span>
+                    </div>
+                    <pre id="stage-stream-code" class="stage-stream-code"></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="stage-summary-card" class="stage-summary-card" hidden>
+            <div class="summary-metrics">
+              <span>Tempo: <strong id="card-total-time">—</strong></span>
+              <span>Tokens: <strong id="card-tokens">—</strong></span>
+              <span>Leitura do desenho: <strong id="card-elements">—</strong></span>
+              <span>Modelo: <strong id="card-model">—</strong></span>
+            </div>
+            <button id="card-compare-btn" class="button button-light" type="button">Antes/depois</button>
+          </div>
+          <div class="preview-footer"><div class="preview-status"><i id="status-dot" aria-hidden="true"></i><span id="status-text" role="status" aria-live="polite">Esperando sua primeira ideia</span></div><span id="generation-time" class="generation-time">Feito para experimentar</span></div>
+          <p id="result-summary" class="result-summary" hidden></p>
+          <section id="code-panel" class="code-panel" aria-labelledby="code-panel-title" hidden>
+            <div class="code-panel-header">
+              <div><strong id="code-panel-title">Código HTML da versão atual</strong> <span id="code-meta" class="small-label"></span></div>
+              <div class="code-panel-actions">
+                <button id="copy-code" class="button button-light code-action" type="button">Copiar HTML</button>
+                <button id="close-code" class="button button-light code-action" type="button">Fechar</button>
+              </div>
+            </div>
+            <pre class="code-viewer" tabindex="0"><code id="code-content"></code></pre>
+          </section>
+          <details id="generation-log" class="generation-log" hidden>
+            <summary>Etapas da geração e bastidores técnicos</summary>
+            <ol id="generation-events"></ol>
+            <div id="backstage-panel" class="backstage-panel">
+              <div class="backstage-meta">
+                <strong>Bastidores da última chamada</strong>
+                <span id="backstage-usage">Sem chamada registrada nesta sessão.</span>
+              </div>
+              <label class="small-label" for="backstage-prompt">Prompt de sistema enviado (sem chaves)</label>
+              <pre id="backstage-prompt" class="backstage-prompt"></pre>
+            </div>
+          </details>
+        </section>
+      </div>
+      <footer class="page-footer"><span>DO RASCUNHO AO POSSÍVEL.</span><span>Atalhos: Espaço capturar · Ctrl+Enter enviar · F tela cheia · C código · L log · [ ] versões</span></footer>
+      <noscript><p class="notice">Ative o JavaScript para usar a câmera e gerar seu app.</p></noscript>
+    </main>
+  </body>
+</html>

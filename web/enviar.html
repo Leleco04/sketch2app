@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sketch2App — Enviar Desenho da Plateia</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: var(--bg, #0b1020);
+      color: var(--text, #f8fafc);
+    }
+    .audience-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--panel, #131b31);
+      border: 1px solid var(--border, #263252);
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .audience-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 0;
+    }
+    .audience-subtitle {
+      font-size: 0.92rem;
+      color: var(--muted, #94a3b8);
+      margin: 4px 0 0;
+    }
+    .audience-preview {
+      width: 100%;
+      max-height: 240px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid var(--border, #263252);
+      background: #070b16;
+    }
+    .audience-file-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      border: 2px dashed var(--border, #334155);
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      text-align: center;
+      background: rgba(15, 23, 42, 0.65);
+    }
+    .audience-file-label:hover {
+      border-color: #60a5fa;
+    }
+  </style>
+</head>
+<body>
+  <main class="audience-card">
+    <header>
+      <div class="brand-lockup">
+        <span class="brand-mark" aria-hidden="true">S2A</span>
+        <div>
+          <h1 class="audience-title">Enviar Desenho ao Palco</h1>
+          <p class="audience-subtitle">Tire uma foto do seu rascunho. O apresentador pode aprovar para gerar no telão!</p>
+        </div>
+      </div>
+    </header>
+
+    <div id="upload-alert" class="alert" role="status" hidden></div>
+
+    <label class="audience-file-label" for="audience-file">
+      <span id="audience-file-text">Tirar foto ou escolher imagem (JPG, PNG, WebP)</span>
+    </label>
+    <input id="audience-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" class="sr-only">
+
+    <img id="audience-preview" class="audience-preview" alt="Prévia do desenho selecionado" hidden>
+
+    <div class="field-group">
+      <label class="field-label" for="audience-author">Seu nome ou apelido (opcional)</label>
+      <input id="audience-author" class="style-input" type="text" maxlength="60" placeholder="Ex: Ana — Turma A">
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="audience-note">Sugestão de estilo ou paleta (opcional)</label>
+      <input id="audience-note" class="style-input" type="text" maxlength="240" placeholder="Ex: calculadora neon azul e roxo">
+    </div>
+
+    <button id="audience-submit" type="button" class="primary-button" disabled>Enviar para a fila do palco</button>
+  </main>
+
+  <script>
+    const fileInput = document.getElementById("audience-file");
+    const fileText = document.getElementById("audience-file-text");
+    const previewImg = document.getElementById("audience-preview");
+    const authorInput = document.getElementById("audience-author");
+    const noteInput = document.getElementById("audience-note");
+    const submitBtn = document.getElementById("audience-submit");
+    const alertBox = document.getElementById("upload-alert");
+
+    let selectedB64 = "";
+
+    function showStatus(msg, isError = false) {
+      alertBox.hidden = false;
+      alertBox.textContent = msg;
+      alertBox.style.borderColor = isError ? "#f87171" : "#34d399";
+    }
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        selectedB64 = "";
+        previewImg.hidden = true;
+        submitBtn.disabled = true;
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        showStatus("A imagem excede o limite de 10 MiB.", true);
+        fileInput.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        const comma = result.indexOf(",");
+        selectedB64 = comma >= 0 ? result.slice(comma + 1) : result;
+        previewImg.src = result;
+        previewImg.hidden = false;
+        fileText.textContent = file.name;
+        submitBtn.disabled = !selectedB64;
+        alertBox.hidden = true;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    submitBtn.addEventListener("click", async () => {
+      if (!selectedB64) return;
+      submitBtn.disabled = true;
+      showStatus("Enviando desenho para a fila de aprovação…", false);
+      try {
+        const res = await fetch("/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_b64: selectedB64,
+            author: authorInput.value.trim(),
+            note: noteInput.value.trim(),
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(data.msg || "Não foi possível enviar o desenho.");
+        }
+        showStatus("Desenho recebido! Aguarde a aprovação do apresentador no palco.", false);
+        selectedB64 = "";
+        fileInput.value = "";
+        fileText.textContent = "Enviar outro desenho";
+      } catch (err) {
+        showStatus(err.message || "Falha ao enviar desenho.", true);
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

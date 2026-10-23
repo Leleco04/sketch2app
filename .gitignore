@@ -1,0 +1,61 @@
+# ==========================================
+# Credenciais e segredos locais (NUNCA SUBIR)
+# ==========================================
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Ambientes virtuais e pacotes Python
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# ==========================================
+# Caches e arquivos compilados
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ==========================================
+# Dados gerados localmente, imagens e bancos
+# ==========================================
+generated/
+*.sqlite3
+*.sqlite3-journal
+
+# Gravações de cache offline (preserva apenas .gitkeep no repositório)
+cache/*
+!cache/.gitkeep
+
+# ==========================================
+# Logs e backups locais
+# ==========================================
+*.log
+*.zip
+*.tar.gz
+
+# ==========================================
+# Configurações de IDEs e do Sistema Operacional
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

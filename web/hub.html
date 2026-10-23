@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#174d3d">
+    <title>Hub de Projetos — Sketch2App</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <header class="site-header shell">
+      <a class="brand" href="/" aria-label="Sketch2App, voltar ao estúdio">
+        <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="currentColor"/><path d="M11 27V13h13M16 29h13V16M13 26l14-14" fill="none" stroke="#d5ea9b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        sketch<span>2</span>app<span class="brand-dot">.</span>
+      </a>
+      <div class="header-meta">
+        <span id="hub-backend-badge" class="mode-pill"><i></i>Carregando hub…</span>
+        <a href="/" class="button button-light">← Voltar ao estúdio</a>
+      </div>
+    </header>
+    <main class="shell">
+      <section class="intro" aria-labelledby="hub-title">
+        <div>
+          <p class="eyebrow">GALERIA DE SESSÕES E VERSÕES</p>
+          <h1 id="hub-title">Hub de <em>projetos.</em><span class="title-spark" aria-hidden="true">✳</span></h1>
+        </div>
+        <p class="intro-copy">Rascunhos, versões e ajustes salvos localmente e sincronizados quando a nuvem está ativa.</p>
+      </section>
+      <div id="hub-notice" class="notice" role="alert" hidden><p id="hub-notice-text"></p></div>
+      <section id="hub-grid" class="hub-grid" aria-live="polite"></section>
+    </main>
+    <script>
+      "use strict";
+      (() => {
+        const grid = document.getElementById("hub-grid");
+        const badge = document.getElementById("hub-backend-badge");
+        const noticeBox = document.getElementById("hub-notice");
+        const noticeText = document.getElementById("hub-notice-text");
+
+        function formatDate(iso) {
+          try {
+            return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+          } catch {
+            return iso;
+          }
+        }
+
+        async function loadHub() {
+          try {
+            const resp = await fetch("/api/hub", { cache: "no-store" });
+            const data = await resp.json();
+            if (!resp.ok || !Array.isArray(data?.items)) throw new Error("hub");
+            badge.replaceChildren(
+              Object.assign(document.createElement("i"), { ariaHidden: "true" }),
+              document.createTextNode(data.backend === "supabase" ? "Local + Supabase" : "Disco local"),
+            );
+            badge.dataset.mode = data.backend === "supabase" ? "live" : "mock";
+            if (!data.items.length) {
+              const empty = document.createElement("div");
+              empty.className = "card hub-empty";
+              empty.textContent = "Nenhum projeto salvo ainda. Crie um app no estúdio para vê-lo aqui.";
+              grid.replaceChildren(empty);
+              return;
+            }
+            grid.replaceChildren(...data.items.map((item) => {
+              const card = document.createElement("article");
+              card.className = "card hub-card";
+
+              const thumb = document.createElement("div");
+              thumb.className = "hub-thumb";
+              if (item.has_image) {
+                const img = document.createElement("img");
+                img.src = `/api/sessions/${item.sid}/image`;
+                img.alt = `Desenho do projeto ${item.title}`;
+                img.loading = "lazy";
+                thumb.append(img);
+              } else {
+                const placeholder = document.createElement("span");
+                placeholder.className = "hub-thumb-text";
+                placeholder.textContent = "Somente texto";
+                thumb.append(placeholder);
+              }
+
+              const body = document.createElement("div");
+              body.className = "hub-card-body";
+
+              const meta = document.createElement("div");
+              meta.className = "hub-card-meta";
+              const dateSpan = document.createElement("span");
+              dateSpan.textContent = formatDate(item.created_at);
+              const syncBadge = document.createElement("span");
+              syncBadge.className = "version-badge";
+              syncBadge.textContent = item.synced_cloud ? `v${item.current} · nuvem` : `v${item.current} · local`;
+              meta.append(dateSpan, syncBadge);
+
+              const title = document.createElement("h2");
+              title.className = "hub-card-title";
+              title.textContent = item.title;
+
+              const summary = document.createElement("p");
+              summary.className = "hub-card-summary";
+              summary.textContent = item.summary;
+
+              const versionsRow = document.createElement("div");
+              versionsRow.className = "hub-versions";
+              for (const n of item.versions) {
+                const vLink = document.createElement("a");
+                vLink.href = `/app/${item.sid}/${n}`;
+                vLink.target = "_blank";
+                vLink.rel = "noopener";
+                vLink.className = "version-pill";
+                vLink.setAttribute("aria-pressed", String(n === item.current));
+                vLink.textContent = `v${n}`;
+                versionsRow.append(vLink);
+              }
+
+              const actions = document.createElement("div");
+              actions.className = "hub-actions";
+              const openStudio = document.createElement("a");
+              openStudio.href = `/?sid=${item.sid}`;
+              openStudio.className = "button button-secondary";
+              openStudio.textContent = "Abrir no estúdio ↗";
+              const openApp = document.createElement("a");
+              openApp.href = `/app/${item.sid}/${item.current}`;
+              openApp.target = "_blank";
+              openApp.rel = "noopener";
+              openApp.className = "button button-light";
+              openApp.textContent = "Ver app";
+              actions.append(openStudio, openApp);
+
+              body.append(meta, title, summary, versionsRow, actions);
+              card.append(thumb, body);
+              return card;
+            }));
+          } catch {
+            noticeText.textContent = "Não foi possível carregar os projetos do hub.";
+            noticeBox.hidden = false;
+          }
+        }
+
+        loadHub();
+      })();
+    </script>
+  </body>
+</html>
