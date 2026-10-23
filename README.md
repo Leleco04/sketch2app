@@ -2,8 +2,6 @@
 
 > **Do papel para o próximo clique:** Transforme wireframes e rascunhos desenhados à mão em aplicações web completas, interativas e funcionais em segundos usando LLMs (Google Gemini).
 
-Criado sob medida para apresentações e palestras ao vivo com efeito *"uau"*: o usuário mostra um rascunho na webcam (ou envia uma foto), opcionalmente adiciona instruções de estilo (ex: *"paleta azul e laranja"*), e um app funcional aparece instantaneamente no telão. Depois, um chat integrado permite ajustar o app em tempo real.
-
 ---
 
 ## 🌟 Principais Recursos
