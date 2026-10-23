@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#174d3d">
+    <meta name="theme-color" content="#23211f">
     <meta name="description" content="Transforme um rascunho em um app interativo, no seu estúdio local.">
     <title>Sketch2App — Do papel ao próximo clique</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -15,15 +15,25 @@
     <a class="skip-link" href="#workspace">Pular para o estúdio</a>
     <header class="site-header shell">
       <a class="brand" href="/" aria-label="Sketch2App, início">
-        <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="currentColor"/><path d="M11 27V13h13M16 29h13V16M13 26l14-14" fill="none" stroke="#d5ea9b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        sketch<span>2</span>app<span class="brand-dot">.</span>
+        <img class="brand-logo" src="/assets/sketch2app-3-completa-claro.svg" alt="sketch2app" height="38">
       </a>
-      <div class="header-meta"><span class="local-label">Seu estúdio local</span><a id="hub-link" href="/hub" class="button button-light hub-link">Hub</a><button id="toggle-audience-panel" class="button button-light audience-toggle" type="button" aria-expanded="false" aria-controls="audience-panel" title="Exibe o QR Code do túnel e a fila de desenhos enviados pela plateia">Plateia</button><button id="toggle-data-api" class="button button-light extras-toggle" type="button" aria-pressed="false" title="Injeta o contrato /api/data/{sid}/{colecao} no prompt para persistência por sessão via fetch">API de dados</button><button id="toggle-extras-mode" class="button button-light extras-toggle" type="button" aria-pressed="false" title="Libera o catálogo local de bibliotecas em /vendor/ (GSAP, Chart.js, Lucide, Alpine, Animate.css e fontes)">Modo caprichado</button><button id="toggle-simple-mode" class="button button-light simple-toggle" type="button" aria-pressed="false" title="Exibe apenas status e app, desligando os extras visuais do telão">Modo simples</button><button id="toggle-offline-panel" class="button button-light offline-toggle" type="button" aria-expanded="false" aria-controls="offline-panel">Modo offline</button><span class="mode-pill" id="mode-badge"><i aria-hidden="true"></i>Verificando modo</span></div>
+      <div class="header-meta">
+        <nav class="nav-links" aria-label="Navegação principal">
+          <a id="hub-link" href="/hub" class="nav-btn hub-link">Hub</a>
+          <button id="toggle-audience-panel" class="nav-btn audience-toggle" type="button" aria-expanded="false" aria-controls="audience-panel" title="Exibe o QR Code do túnel e a fila de desenhos da plateia">Plateia</button>
+          <button id="toggle-data-api" class="nav-btn" type="button" aria-pressed="false" title="Injeta persistência de dados local (/api/data)">Dados</button>
+          <button id="toggle-extras-mode" class="nav-btn extras-toggle" type="button" aria-pressed="false" title="Catálogo de bibliotecas (/vendor/)">Caprichado</button>
+          <button id="toggle-simple-mode" class="nav-btn simple-toggle" type="button" aria-pressed="false" title="Modo simples (somente status e app)">Simples</button>
+          <button id="toggle-offline-panel" class="nav-btn offline-toggle" type="button" aria-expanded="false" aria-controls="offline-panel">Offline</button>
+        </nav>
+        <span class="mode-pill" id="mode-badge"><i aria-hidden="true"></i>Verificando modo</span>
+      </div>
     </header>
     <main class="shell">
       <section class="intro" aria-labelledby="page-title">
-        <div><p class="eyebrow">UM ESPAÇO PARA TIRAR IDEIAS DO PAPEL</p><h1 id="page-title">Do papel para o<br> <em>próximo clique.</em><span class="title-spark" aria-hidden="true">✳</span></h1></div>
-        <p class="intro-copy">Um rascunho, um pouco de intenção.<br> Veja sua ideia ganhar forma em um app que você pode experimentar.</p>
+        <div>
+          <h1 id="page-title">Do papel para o <em>próximo clique.</em><span class="title-spark" aria-hidden="true">✳</span></h1>
+        </div>
       </section>
       <p id="mode-note" class="mode-note" hidden></p>
       <section id="offline-panel" class="offline-panel card" aria-labelledby="offline-title" hidden>

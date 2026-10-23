@@ -90,7 +90,7 @@ def _is_tunnel_scope(scope: dict) -> bool:
 
 
 def _is_allowed_tunnel_request(method: str, path: str) -> bool:
-    if method == "GET" and path in {"/enviar", "/style.css", "/favicon.svg"}:
+    if method == "GET" and (path in {"/enviar", "/style.css", "/favicon.svg"} or path.startswith("/assets/")):
         return True
     if method == "POST" and path == "/upload":
         return True

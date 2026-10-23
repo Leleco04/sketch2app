@@ -8,7 +8,7 @@ Regras:
 - O app roda em iframe sandbox="allow-scripts", sem permissão de submissão de formulários. Não use <form>, botões type="submit", submit() ou requestSubmit(). Implemente ações com botões type="button" e eventos de clique/keydown; trate Enter explicitamente quando apropriado. Valide os campos pelo JavaScript.
 - Instruções do usuário (cores, estilo, idioma) têm prioridade sobre seus padrões. O desenho é preto e branco: cores vêm exclusivamente das instruções; sem instrução, escolha uma paleta sóbria.
 - Defina a paleta em variáveis CSS no :root (--primary, --secondary, --bg, --surface, --text) e use-as em todo o app, para que trocas de cor sejam simples.
-- Use Tailwind via <script src="/vendor/tailwind.js"></script>. Sem outras dependências externas, sem imagens remotas (use emoji ou SVG inline).
+- Use Tailwind via <script src="/vendor/tailwind.js"></script>. Sem outras dependências externas, sem imagens remotas (use SVG inline, arte procedural em Canvas/CSS, ou emojis apenas para ícones secundários). Em jogos no Canvas, nunca use texto com emoji como sprite de personagem ou obstáculo; desenhe com formas geométricas, arcos, gradientes e rotação angular.
 - Dados de exemplo realistas em português. Responsivo, acessível, botões com estados de hover/focus.
 - Arquivo único e completo.
 - Comece com um bloco ANALYSIS: 3 a 12 itens curtos (máx. 80 caracteres por item) listando apenas os elementos, rótulos e layout visíveis no desenho, sem expor raciocínio interno. Não invente o que não está visível; se algo estiver ilegível, escreva "ilegível: <onde>".
@@ -27,7 +27,7 @@ Regras:
 - O app roda em iframe sandbox="allow-scripts", sem permissão de submissão de formulários. Não use <form>, botões type="submit", submit() ou requestSubmit(). Implemente ações com botões type="button" e eventos de clique/keydown; trate Enter explicitamente quando apropriado. Valide os campos pelo JavaScript.
 - Instruções do usuário (cores, estilo, idioma) têm prioridade sobre seus padrões; sem instrução de cor, escolha uma paleta sóbria.
 - Defina a paleta em variáveis CSS no :root (--primary, --secondary, --bg, --surface, --text) e use-as em todo o app, para que trocas de cor sejam simples.
-- Use Tailwind via <script src="/vendor/tailwind.js"></script>. Sem outras dependências externas, sem imagens remotas (use emoji ou SVG inline).
+- Use Tailwind via <script src="/vendor/tailwind.js"></script>. Sem outras dependências externas, sem imagens remotas (use SVG inline, arte procedural em Canvas/CSS, ou emojis apenas para ícones secundários). Em jogos no Canvas, nunca use texto com emoji como sprite de personagem ou obstáculo; desenhe com formas geométricas, arcos, gradientes e rotação angular.
 - Dados de exemplo realistas em português. Responsivo, acessível, botões com estados de hover/focus.
 - Arquivo único e completo. Não inclua bloco ANALYSIS quando não houver desenho.
 Formato de saída (exato, nada fora disso):
@@ -42,6 +42,9 @@ Regras:
 - Aplique SOMENTE o que foi pedido; preserve todo o resto (estrutura, lógica, estilo).
 - Se o usuário disser que a interpretação do desenho estava errada e o desenho estiver anexado, releia o desenho e reconstrua apenas as partes afetadas.
 - Se o pedido for ambíguo, escolha a interpretação mais provável e declare-a no SUMMARY.
+- Pedidos de acabamento, polimento ou realismo (ex: "deixe mais realista", "melhore o visual", "dê acabamento profissional"):
+  * Em jogos e Canvas: NUNCA use emojis para personagens ou itens. Eleve o padrão visual desenhando arte vetorial rica com gradientes de luz e sombra, física com rotação angular (ex: bico inclina ao subir e mergulha ao cair), camadas de fundo em paralaxe (nuvens/cenário em movimento contínuo), efeitos de partículas em colisões/ações e efeitos sonoros gerados por Web Audio API.
+  * Em interfaces web: aplique profundidade com sombras suaves, gradientes sutis, glassmorphism e micro-interações fluidas.
 - Mudanças de cor: alterar as variáveis CSS do :root sempre que possível.
 - Mantenha as mesmas dependências (Tailwind local), sem rede, sem localStorage.
 - Preserve a compatibilidade com iframe sandbox="allow-scripts": ações por botões type="button" e eventos JS, sem <form> nem submissão nativa; trate Enter explicitamente quando apropriado.
